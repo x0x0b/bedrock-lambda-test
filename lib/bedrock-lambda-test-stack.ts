@@ -15,6 +15,17 @@ export class BedrockLambdaTestStack extends cdk.Stack {
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
       ],
+      inlinePolicies: {
+        BedrockPolicy: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              actions: ['bedrock:InvokeModel'],
+              resources: ['arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.titan-text-express-v1'],
+              effect: iam.Effect.ALLOW,
+            }),
+          ],
+        })
+      }
     });
 
     // Lambda関数

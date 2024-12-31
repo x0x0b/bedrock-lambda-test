@@ -2,8 +2,39 @@ import json
 import logging
 from typing import Dict, Any
 
+import boto3
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+default_region = "ap-northeast-1"
+
+
+def chat_with_bedrock(prompt, region_name=default_region):
+  try:
+    bedrock = boto3.client(
+        service_name='bedrock-runtime',
+        region_name=region_name
+    )
+
+    logger.info("Chat with Bedrock: %s", prompt)
+    body = json.dumps({
+      "inputText": f"User: {prompt}\\nBot: "
+    })
+
+    response = bedrock.invoke_model(
+        modelId="amazon.titan-text-express-v1",
+        body=body,
+        contentType="application/json",
+        accept="application/json",
+    )
+
+    # レスポンスの解析
+    response_body = json.loads(response.get('body').read())
+    return response_body.get('results')[0].get('outputText')
+
+  except Exception as e:
+    raise e
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -15,10 +46,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     query_params = event.get('queryStringParameters', {}) or {}
 
-    body = {}
-    if event.get('body'):
-      body = json.loads(event['body']) if event['body'] else {}
-
     path_params = event.get('pathParameters', {}) or {}
 
     response_body = {
@@ -26,7 +53,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
       'method': http_method,
       'queryParams': query_params,
       'pathParams': path_params,
-      'body': body
+      'response': chat_with_bedrock(query_params.get('prompt', '自己紹介をしてください。'))
     }
 
     return {
@@ -47,6 +74,5 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
       },
       'body': json.dumps({
         'message': 'Internal server error',
-        'error': str(e)
       }, ensure_ascii=False)
     }
