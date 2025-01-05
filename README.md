@@ -10,8 +10,10 @@ curl -s 'https://<url-id>.lambda-url.ap-northeast-1.on.aws/?prompt=hello!'
 
 ```mermaid
 graph LR
-    user[User] -->|HTTP Request| FunctionURL["Lambda Function URL"]
+    User -->|HTTP Request| FunctionURL["Lambda Function URL"]
     FunctionURL -->|Invoke| Lambda["AWS Lambda"]
+    Lambda -->|Request| Bedrock["Amazon Bedrock"]
+    Bedrock -->|Response| Lambda
     Lambda -->|Response| FunctionURL
-    FunctionURL -->|HTTP Response| user[User]
+    FunctionURL -->|HTTP Response| User
 ```
